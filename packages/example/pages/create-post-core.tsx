@@ -6,13 +6,13 @@ import {
     signCertificate
 } from '@phala/sdk'
 import type { ApiPromise } from '@polkadot/api'
-import { hexAddPrefix, numberToHex } from '@polkadot/util'
 // import { decodeAddress } from '@polkadot/util-crypto'
 import accountAtom from 'atoms/account'
 import { Block } from 'baseui/block'
 import { Button } from 'baseui/button'
 import { Checkbox, LABEL_PLACEMENT } from 'baseui/checkbox'
 import { Input } from 'baseui/input'
+import { StyledLink } from 'baseui/link'
 import { StyledSpinnerNext } from 'baseui/spinner'
 import { toaster } from 'baseui/toast'
 import { LabelXSmall } from 'baseui/typography'
@@ -23,6 +23,7 @@ import 'github-markdown-css/github-markdown.css'
 import { useAtom } from 'jotai'
 import { createApi } from 'lib/polkadotApi'
 import { getSigner } from 'lib/polkadotExtension'
+import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { UnControlled as CodeMirror } from 'react-codemirror2'
 import ReactMarkdown from 'react-markdown'
@@ -113,10 +114,10 @@ function CreatePostCore() {
             CreatePost: {
               id: postId,
               owner: owner,
-              readable_by: owner,
-              content: post,
+              readable_by: readableBy.trim(),
+              content: post.trim(),
               is_private: isPrivate,
-              title: title,
+              title: title.trim(),
             },
           })
           .toHex(),
@@ -125,11 +126,23 @@ function CreatePostCore() {
           if (status.isFinalized) {
             toaster.update(toastKey, {
               kind: 'positive',
-              children: `Command Sent ${postId}`,
+              children: `Command Sent.`,
               autoHideDuration: 3000,
             })
-            console.log(postId)
-            //   setOwner('')
+            const postPage = `${window.location.origin}/p/${postId}`
+            toaster.info(
+              <>
+                {'View the post (may take few mins)'}
+                <br />
+                <br />
+                {
+                  <Link href={postPage} passHref>
+                    <StyledLink>{postPage}</StyledLink>
+                  </Link>
+                }
+              </>,
+              {autoHideDuration: 10000}
+            )
           }
         },
       })
@@ -214,10 +227,13 @@ function CreatePostCore() {
     )
   }
 
+  const isNotAllowed =
+    !api || !phala || !post || (isPrivate && allowReadAccess && !readableBy)
+
   return (
     <div className="App">
       <div className="antialiased">
-        <div className="px-4 max-w-6xl mx-auto min-h-screen">
+        <div className="max-w-6xl mx-auto min-h-screen">
           <div className="">
             <input
               className="w-full h-10 px-3 mb-2 text-base text-gray-700 placeholder-gray-600 border rounded-lg focus:shadow-outline"
@@ -289,9 +305,7 @@ function CreatePostCore() {
                 {allowReadAccess && (
                   <Input
                     value={readableBy}
-                    onChange={(e) =>
-                      setReadableBy(e.currentTarget.value.trim())
-                    }
+                    onChange={(e) => setReadableBy(e.currentTarget.value)}
                     overrides={{Root: {style: {width: '500px'}}}}
                   >
                     Accounts:
@@ -299,9 +313,9 @@ function CreatePostCore() {
                 )}
               </div>
             )}
-            <Button onClick={onSignCertificate}>Sign</Button>
-            <Button onClick={onPublish}>Publish</Button>
-            <Button onClick={onView}>View</Button>
+            <Button onClick={onPublish} disabled={isNotAllowed}>
+              Publish
+            </Button>
           </div>
         </div>
       </div>
