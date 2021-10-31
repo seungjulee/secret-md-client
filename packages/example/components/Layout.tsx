@@ -1,16 +1,16 @@
-import type {FC} from 'react'
-import Head from 'next/head'
-import {H2} from 'baseui/typography'
+import { Block } from 'baseui/block'
+import { ToasterContainer } from 'baseui/toast'
+import { H2 } from 'baseui/typography'
 import useIsClient from 'hooks/useIsClient'
-import {ToasterContainer} from 'baseui/toast'
-import {Block} from 'baseui/block'
+import Head from 'next/head'
+import type { FC } from 'react'
 import AccountSelect from './AccountSelect'
 
 const Layout: FC<{title?: string}> = ({title, children}) => {
   const isClient = useIsClient()
   const displayTitle = title || 'Phala SDK Example'
   return (
-    <Block width="100%" maxWidth="700px" margin="0 auto" padding="0 10px">
+    <Block width="100%" maxWidth="900px" margin="0 auto" padding="0 10px">
       <Head>
         <title>{displayTitle}</title>
       </Head>
