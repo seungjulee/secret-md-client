@@ -10,6 +10,7 @@ import { hexAddPrefix, numberToHex } from '@polkadot/util'
 // import { decodeAddress } from '@polkadot/util-crypto'
 import accountAtom from 'atoms/account'
 import { Block } from 'baseui/block'
+import { Checkbox, LABEL_PLACEMENT } from 'baseui/checkbox'
 import { StyledSpinnerNext } from 'baseui/spinner'
 import { toaster } from 'baseui/toast'
 import { LabelXSmall } from 'baseui/typography'
@@ -44,6 +45,9 @@ function CreatePostCore() {
     isPreview: false,
     isCompressed: true,
   })
+  const [isPrivate, setIsPrivate] = useState<boolean>(false)
+  const [activeTab, setActiveTab] = useState('0')
+
   const postId = randomHex(12)
 
   const [api, setApi] = useState<ApiPromise>()
@@ -306,6 +310,13 @@ function CreatePostCore() {
                 )} */}
               </div>
             </div>
+            <Checkbox
+              checked={isPrivate}
+              onChange={(e) => setIsPrivate((value) => !value)}
+              labelPlacement={LABEL_PLACEMENT.right}
+            >
+              Make it private
+            </Checkbox>
           </div>
         </div>
       </div>
