@@ -136,9 +136,11 @@ function CreatePostCore() {
                 <br />
                 <br />
                 {
-                  <Link href={postPage} passHref>
-                    <StyledLink>{postPage}</StyledLink>
-                  </Link>
+                  <div className="link-color-white">
+                    <Link href={postPage} passHref>
+                      <StyledLink>{postPage}</StyledLink>
+                    </Link>
+                  </div>
                 }
               </>,
               {autoHideDuration: 10000}

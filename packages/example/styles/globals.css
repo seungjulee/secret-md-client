@@ -8,3 +8,12 @@ body {
 * {
   box-sizing: border-box;
 }
+
+.remove-underline a {
+    text-decoration: none;
+    color: #FFFFFF;
+}
+
+.link-color-white a {
+    color: #FFFFFF;
+}

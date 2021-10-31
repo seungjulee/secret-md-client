@@ -1,13 +1,13 @@
 import Document, {
-  Head,
-  Html,
-  Main,
-  NextScript,
-  DocumentContext,
+    DocumentContext,
+    Head,
+    Html,
+    Main,
+    NextScript
 } from 'next/document'
-import {Server, Sheet} from 'styletron-engine-atomic'
-import {Provider as StyletronProvider} from 'styletron-react'
-import {styletron} from '../styletron'
+import { Server, Sheet } from 'styletron-engine-atomic'
+import { Provider as StyletronProvider } from 'styletron-react'
+import { styletron } from '../styletron'
 
 // https://github.com/vercel/next.js/blob/canary/examples/with-styletron/pages/_document.js
 class MyDocument extends Document<{stylesheets: Sheet[]}> {
@@ -44,7 +44,10 @@ class MyDocument extends Document<{stylesheets: Sheet[]}> {
             />
           ))}
           <meta name="description" content="Phala SDK Example" />
-          <link rel="icon" href="/favicon.ico" />
+          <link
+            rel="icon"
+            href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥷</text></svg>"
+          />
         </Head>
         <body>
           <Main />

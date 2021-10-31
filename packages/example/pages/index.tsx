@@ -1,7 +1,5 @@
-import { StyledLink } from 'baseui/link'
 import type { NextPage } from 'next'
-import Head from 'next/head'
-import Link from 'next/link'
+import CreatePost from './create-post'
 
 const LINKS: [string, string][] = [
   ['/guess-number', 'Guess Number'],
@@ -11,27 +9,7 @@ const LINKS: [string, string][] = [
 ]
 
 const Home: NextPage = () => {
-  return (
-    <div>
-      <Head>
-        <title>Phala SDK Example</title>
-      </Head>
-
-      <Link href="/template" passHref>
-        <StyledLink>Template</StyledLink>
-      </Link>
-
-      <ol>
-        {LINKS.map(([href, label], index) => (
-          <li key={href}>
-            <Link href={href} passHref>
-              <StyledLink>{label}</StyledLink>
-            </Link>
-          </li>
-        ))}
-      </ol>
-    </div>
-  )
+  return <CreatePost />
 }
 
 export default Home
