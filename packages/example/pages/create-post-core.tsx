@@ -113,6 +113,8 @@ function CreatePostCore() {
     const toastKey = toaster.info('Setting…', {autoHideDuration: 0})
     const signer = await getSigner(account)
     const owner = '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY'
+    const poorBob = '5G96fAtHjVgTmosV7B5tLP7M8R62Fihu3EyPCViBWrgcXjaJ'
+    const notAllowedPaul = '5HNEg9bZZV4w9jTeemHWwRLHGp7BxV8K3YN65iGvEYcxg5vb'
     try {
       const _unsubscribe = await phala.command({
         account,
