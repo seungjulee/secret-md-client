@@ -25,7 +25,7 @@ import { createApi } from 'lib/polkadotApi'
 import { getSigner } from 'lib/polkadotExtension'
 import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { UnControlled as CodeMirror } from 'react-codemirror2'
+import { Controlled as CodeMirror } from 'react-codemirror2'
 import ReactMarkdown from 'react-markdown'
 import { baseURL, CONTRACT_ID, PastebinABI } from '../contracts/Pastebin'
 
@@ -269,13 +269,17 @@ function CreatePostCore() {
               <CodeMirror
                 className="w-full prose max-w-none max-h-screen prose-indigo leading-6 rounded-b-md shadow-sm border border-gray-300 bg-white overflow-y-auto"
                 value={post}
+                onBeforeChange={(editor, data, value) => {
+                  setPostValue(value)
+                }}
                 options={{
                   mode: 'markdown',
                   theme: 'default',
                   lineNumbers: true,
+                  autoCursor: false,
                 }}
                 onChange={(editor, data, value) => {
-                  setPostValue(value.trim())
+                  setPostValue(value)
                 }}
               />
             )}
