@@ -1,30 +1,30 @@
-import type {ApiPromise} from '@polkadot/api'
-import {numberToHex, hexAddPrefix, u8aToHex} from '@polkadot/util'
-import {createApi} from 'lib/polkadotApi'
-import {FormEventHandler, useCallback, useEffect, useRef, useState} from 'react'
 import {
-  create as createPhala,
-  randomHex,
-  signCertificate,
-  CertificateData,
-  PhalaInstance,
+    CertificateData,
+    create as createPhala,
+    PhalaInstance,
+    randomHex,
+    signCertificate
 } from '@phala/sdk'
-import {Input} from 'baseui/input'
-import {Button} from 'baseui/button'
-import {toaster} from 'baseui/toast'
-import {useAtom} from 'jotai'
+import type { ApiPromise } from '@polkadot/api'
+import { hexAddPrefix, numberToHex, u8aToHex } from '@polkadot/util'
+import { decodeAddress } from '@polkadot/util-crypto'
 import accountAtom from 'atoms/account'
-import {getSigner} from 'lib/polkadotExtension'
-import {FormControl} from 'baseui/form-control'
-import {ProgressSteps, Step} from 'baseui/progress-steps'
-import {LabelXSmall, ParagraphMedium} from 'baseui/typography'
-import {StyledSpinnerNext} from 'baseui/spinner'
-import {Block} from 'baseui/block'
-import {ButtonGroup} from 'baseui/button-group'
-import {decodeAddress} from '@polkadot/util-crypto'
+import { Block } from 'baseui/block'
+import { Button } from 'baseui/button'
+import { ButtonGroup } from 'baseui/button-group'
+import { FormControl } from 'baseui/form-control'
+import { Input } from 'baseui/input'
+import { ProgressSteps, Step } from 'baseui/progress-steps'
+import { StyledSpinnerNext } from 'baseui/spinner'
+import { toaster } from 'baseui/toast'
+import { LabelXSmall, ParagraphMedium } from 'baseui/typography'
+import { useAtom } from 'jotai'
+import { createApi } from 'lib/polkadotApi'
+import { getSigner } from 'lib/polkadotExtension'
+import { FormEventHandler, useCallback, useEffect, useRef, useState } from 'react'
 
 const baseURL = '/'
-const CONTRACT_ID = 100
+const CONTRACT_ID = 420
 
 const Game = ({api, phala}: {api: ApiPromise; phala: PhalaInstance}) => {
   const [account] = useAtom(accountAtom)
@@ -73,7 +73,7 @@ const Game = ({api, phala}: {api: ApiPromise; phala: PhalaInstance}) => {
       if (!certificateData) return
       setGuessLoading(true)
       const encodedQuery = api
-        .createType('GuessNumberRequest', {
+        .createType('PastebinRequest', {
           head: {
             id: numberToHex(CONTRACT_ID, 256),
             nonce: hexAddPrefix(randomHex(32)),
@@ -92,7 +92,7 @@ const Game = ({api, phala}: {api: ApiPromise; phala: PhalaInstance}) => {
           const {
             result: {ok, err},
           } = api
-            .createType('GuessNumberResponse', hexAddPrefix(data))
+            .createType('PastebinResponse', hexAddPrefix(data))
             .toJSON() as any
 
           if (ok) {
@@ -122,7 +122,7 @@ const Game = ({api, phala}: {api: ApiPromise; phala: PhalaInstance}) => {
   const onReveal = useCallback(() => {
     if (!certificateData) return
     const encodedQuery = api
-      .createType('GuessNumberRequest', {
+      .createType('PastebinRequest', {
         head: {
           id: numberToHex(CONTRACT_ID, 256),
           nonce: hexAddPrefix(randomHex(32)),
@@ -139,7 +139,7 @@ const Game = ({api, phala}: {api: ApiPromise; phala: PhalaInstance}) => {
         const {
           result: {ok, err},
         } = api
-          .createType('GuessNumberResponse', hexAddPrefix(data))
+          .createType('PastebinResponse', hexAddPrefix(data))
           .toJSON() as any
 
         if (ok) {
@@ -166,7 +166,7 @@ const Game = ({api, phala}: {api: ApiPromise; phala: PhalaInstance}) => {
   const onQueryOwner = useCallback(() => {
     if (!certificateData) return
     const encodedQuery = api
-      .createType('GuessNumberRequest', {
+      .createType('PastebinRequest', {
         head: {
           id: numberToHex(CONTRACT_ID, 256),
           nonce: hexAddPrefix(randomHex(32)),
@@ -183,7 +183,7 @@ const Game = ({api, phala}: {api: ApiPromise; phala: PhalaInstance}) => {
         const {
           result: {ok, err},
         } = api
-          .createType('GuessNumberResponse', hexAddPrefix(data))
+          .createType('PastebinResponse', hexAddPrefix(data))
           .toJSON() as any
 
         if (ok) {
@@ -215,9 +215,7 @@ const Game = ({api, phala}: {api: ApiPromise; phala: PhalaInstance}) => {
       .command({
         account,
         contractId: CONTRACT_ID,
-        payload: api
-          .createType('GuessNumberCommand', {NextRandom: null})
-          .toHex(),
+        payload: api.createType('PastebinCommand', {NextRandom: null}).toHex(),
         signer,
         onStatus: (status) => {
           if (status.isFinalized) {
@@ -254,7 +252,7 @@ const Game = ({api, phala}: {api: ApiPromise; phala: PhalaInstance}) => {
           account,
           contractId: CONTRACT_ID,
           payload: api
-            .createType('GuessNumberCommand', {SetOwner: {owner: decodedOwner}})
+            .createType('PastebinCommand', {SetOwner: {owner: decodedOwner}})
             .toHex(),
           signer,
           onStatus: (status) => {
@@ -352,7 +350,7 @@ const Game = ({api, phala}: {api: ApiPromise; phala: PhalaInstance}) => {
   )
 }
 
-const GuessNumber: Page = () => {
+const Pastebin: Page = () => {
   const [api, setApi] = useState<ApiPromise>()
   const [phala, setPhala] = useState<PhalaInstance>()
 
@@ -361,34 +359,64 @@ const GuessNumber: Page = () => {
       endpoint: process.env.NEXT_PUBLIC_WS_ENDPOINT as string,
       types: {
         RandomNumber: 'u32',
+
+        PostId: 'String',
+        PostContent: 'String',
+        CreateOn: 'u64',
+
         ContractOwner: {owner: 'AccountId'},
         Guess: {guess_number: 'RandomNumber'},
+
+        CreatePostRequest: {
+          owner: 'AccountId',
+          readable_by: 'AccountId',
+          content: 'String',
+        },
+
+        Post: {
+          id: 'PostId',
+          content: 'PostContent',
+          owner: 'AccountId',
+          readable_by: 'AccountId',
+          created_on: 'CreateOn',
+        },
+
         GuessResult: {
           _enum: ['TooLarge', 'ToSmall', 'Correct'],
         },
         GuessError: {
           _enum: ['OriginUnavailable', 'NotAuthorized'],
         },
-        GuessNumberRequestData: {
-          _enum: {QueryOwner: null, Guess: 'Guess', PeekRandomNumber: null},
+        PastebinRequestData: {
+          _enum: {
+            QueryOwner: null,
+            QueryPost: null,
+            Guess: 'Guess',
+            PeekRandomNumber: null,
+          },
         },
-        GuessNumberResponseData: {
+        PastebinResponseData: {
           _enum: {
             Owner: 'AccountId',
             GuessResult: 'GuessResult',
             RandomNumber: 'RandomNumber',
+            Post: 'Post',
           },
         },
-        GuessNumberRequest: {
+        PastebinRequest: {
           head: 'ContractQueryHead',
-          data: 'GuessNumberRequestData',
+          data: 'PastebinRequestData',
         },
-        GuessNumberResponse: {
+        PastebinResponse: {
           nonce: '[u8; 32]',
-          result: 'Result<GuessNumberResponseData, GuessError>',
+          result: 'Result<PastebinResponseData, GuessError>',
         },
-        GuessNumberCommand: {
-          _enum: {NextRandom: null, SetOwner: 'ContractOwner'},
+        PastebinCommand: {
+          _enum: {
+            NextRandom: null,
+            SetOwner: 'ContractOwner',
+            CreatePost: 'CreatePostRequest',
+          },
         },
       },
     })
@@ -421,6 +449,6 @@ const GuessNumber: Page = () => {
   )
 }
 
-GuessNumber.title = 'Guess Number'
+Pastebin.title = 'Guess Number'
 
-export default GuessNumber
+export default Pastebin
