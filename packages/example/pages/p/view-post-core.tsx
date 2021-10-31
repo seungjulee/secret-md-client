@@ -2,14 +2,17 @@ import {
     CertificateData,
     create as createPhala,
     PhalaInstance,
+    randomHex,
     signCertificate
 } from '@phala/sdk'
 import type { ApiPromise } from '@polkadot/api'
+import { hexAddPrefix, numberToHex } from '@polkadot/util'
 import accountAtom from 'atoms/account'
 import { Block } from 'baseui/block'
+import { Button } from 'baseui/button'
 import { StyledSpinnerNext } from 'baseui/spinner'
 import { toaster } from 'baseui/toast'
-import { LabelXSmall } from 'baseui/typography'
+import { LabelXSmall, ParagraphMedium } from 'baseui/typography'
 import 'codemirror/lib/codemirror.css'
 import 'codemirror/mode/markdown/markdown'
 import 'codemirror/theme/monokai.css'
@@ -21,7 +24,8 @@ import { getSigner } from 'lib/polkadotExtension'
 import { useRouter } from 'next/router'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
-import { baseURL, PastebinABI } from '../../contracts/Pastebin'
+import type { Pastebin } from '../../contracts/Pastebin'
+import { baseURL, CONTRACT_ID, PastebinABI } from '../../contracts/Pastebin'
 
 declare let window: any
 
@@ -29,11 +33,14 @@ function ViewPost() {
   const router = useRouter()
   const {slug: postId} = router.query
   // store Post in local state
-  const [title, settitleValue] = useState<string>('')
+  const [title, setTitleValue] = useState<string>('')
   const [content, setContentValue] = useState<string>('')
   const [author, setAuthorValue] = useState<string>('')
   const [createdOn, setCreatedOn] = useState<number>(0)
   const [canRead, setCanRead] = useState<boolean>(false)
+  const [isSigned, setIsSigned] = useState<boolean>(false)
+
+  const [guessLoading, setGuessLoading] = useState(false)
 
   // call the smart contract, read the current Post value
   async function fetchJournal() {}
@@ -60,17 +67,21 @@ function ViewPost() {
   }, [api])
 
   useEffect(() => {
-    createApi(PastebinABI)
-      .then((api) => {
-        setApi(api)
-        return createPhala({api, baseURL}).then((phala) => {
-          setPhala(() => phala)
+    if (!api && !phala) {
+      createApi(PastebinABI)
+        .then((api) => {
+          setApi(api)
+          return createPhala({api, baseURL}).then((phala) => {
+            setPhala(() => phala)
+          })
         })
-      })
-      .catch((err) => {
-        toaster.negative((err as Error).message, {})
-      })
-  }, [])
+        .catch((err) => {
+          toaster.negative((err as Error).message, {})
+        })
+    }
+
+    onView()
+  }, [postId, certificateData])
 
   const onSignCertificate = useCallback(async () => {
     if (account && api) {
@@ -85,6 +96,7 @@ function ViewPost() {
           })
         )
         toaster.positive('Certificate signed', {})
+        setIsSigned(true)
       } catch (err) {
         toaster.negative((err as Error).message, {})
       }
@@ -92,7 +104,60 @@ function ViewPost() {
     }
   }, [api, account])
 
-  if (!postId || !api || !phala) {
+  const onView = async function () {
+    if (!certificateData || !api || !phala) return
+    setGuessLoading(true)
+    const encodedQuery = api
+      .createType('PastebinRequest', {
+        head: {
+          id: numberToHex(CONTRACT_ID, 256),
+          nonce: hexAddPrefix(randomHex(32)),
+        },
+        data: {
+          queryPost: {
+            id: postId,
+            //   id: '594b3150dca54e2a994333bf',
+          },
+        },
+      })
+      .toHex()
+    const toastKey = toaster.info('Querying…', {autoHideDuration: 0})
+
+    phala
+      .query(encodedQuery, certificateData)
+      .then((data) => {
+        const {
+          result: {ok, err},
+        } = api
+          .createType('PastebinResponse', hexAddPrefix(data))
+          .toJSON() as any
+
+        if (ok) {
+          const result: Pastebin = ok.post
+
+          toaster.update(toastKey, {
+            children: `Successfully fetched the post`,
+            autoHideDuration: 3000,
+          })
+          setTitleValue(result.title)
+          setContentValue(result.content)
+          setCreatedOn(result.created_on)
+          setAuthorValue(result.owner)
+        }
+
+        if (err) {
+          throw new Error(err)
+        }
+      })
+      .catch((err) => {
+        toaster.negative((err as Error).message, {})
+      })
+      .finally(() => {
+        setGuessLoading(false)
+      })
+  }
+
+  if (!postId || !api || !phala || (isSigned && !content)) {
     return (
       <Block
         display="flex"
@@ -107,7 +172,7 @@ function ViewPost() {
     )
   }
 
-  if (content === '') {
+  if (!isSigned) {
     return (
       <div className="bg-gray-50 antialiased">
         <div className="max-w-6xl mx-auto bg-white my-2 mb-8">
@@ -119,12 +184,22 @@ function ViewPost() {
                 </p>
               )}
               <div className="markdown-body my-4">
-                <button
+                {/* <button
                   onClick={onSignCertificate}
                   className="flex bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
                 >
-                  Sign
-                </button>
+                  Sign Certificate
+                </button> */}
+                <ParagraphMedium>
+                  Sign a certificate to view the post.
+                </ParagraphMedium>
+                <Button
+                  isLoading={signCertificateLoading}
+                  onClick={onSignCertificate}
+                  disabled={!account}
+                >
+                  Sign Certificate
+                </Button>
               </div>
             </div>
           </div>

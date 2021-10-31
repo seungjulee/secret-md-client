@@ -33,22 +33,19 @@ interface UIState {
   isPreview: boolean
   isCompressed: boolean
 }
+const postId = randomHex(12)
 
 function CreatePostCore() {
   //   const [account] = useAtom(accountAtom)
   // store Post in local state
   const [title, setTitleValue] = useState<string>('')
   const [post, setPostValue] = useState<string>('')
-  const [publishedAddress, setPublishedAddress] = useState<string>('')
-  const [password, setPassword] = useState<string>('')
   const [uiState, setUIState] = useState<UIState>({
     isPreview: false,
     isCompressed: true,
   })
   const [isPrivate, setIsPrivate] = useState<boolean>(false)
   const [activeTab, setActiveTab] = useState('0')
-
-  const postId = randomHex(12)
 
   const [api, setApi] = useState<ApiPromise>()
   const [phala, setPhala] = useState<PhalaInstance>()
@@ -126,6 +123,8 @@ function CreatePostCore() {
               owner: owner,
               readable_by: owner,
               content: post,
+              is_private: isPrivate,
+              title: title,
             },
           })
           .toHex(),
@@ -134,9 +133,10 @@ function CreatePostCore() {
           if (status.isFinalized) {
             toaster.update(toastKey, {
               kind: 'positive',
-              children: 'Command Sent',
+              children: `Command Sent ${postId}`,
               autoHideDuration: 3000,
             })
+            console.log(postId)
             //   setOwner('')
           }
         },
@@ -145,11 +145,6 @@ function CreatePostCore() {
       if (_unsubscribe) {
         unsubscribe.current = _unsubscribe
       }
-      toaster.update(toastKey, {
-        kind: 'positive',
-        children: `${postId} published`,
-        autoHideDuration: 5000,
-      })
     } catch (err) {
       toaster.update(toastKey, {
         kind: 'negative',
@@ -157,12 +152,13 @@ function CreatePostCore() {
         autoHideDuration: 3000,
       })
     }
-  }, [phala, api, account, post, postId])
+  }, [phala, api, account, post, postId, title, isPrivate])
 
   const onView = useCallback(
     async (e) => {
       if (!certificateData || !api || !phala) return
       setGuessLoading(true)
+      console.log(postId)
       const encodedQuery = api
         .createType('PastebinRequest', {
           head: {
@@ -171,7 +167,7 @@ function CreatePostCore() {
           },
           data: {
             queryPost: {
-              id: '594b3150dca54e2a994333bf',
+              id: postId,
               //   id: '594b3150dca54e2a994333bf',
             },
           },
@@ -209,7 +205,7 @@ function CreatePostCore() {
           setGuessLoading(false)
         })
     },
-    [phala, api, certificateData]
+    [phala, api, certificateData, postId]
   )
 
   if (!api || !phala) {
@@ -229,7 +225,7 @@ function CreatePostCore() {
 
   return (
     <div className="App">
-      <div className="bg-gray-50 antialiased">
+      <div className="antialiased">
         <div className="px-4 max-w-6xl mx-auto min-h-screen">
           <div className="">
             <input
@@ -240,7 +236,7 @@ function CreatePostCore() {
                 setTitleValue(e.target.value.trim())
               }}
             />
-            <div className="bg-gray-50 border border-b-0 border-gray-300 top-0 left-0 right-0 block rounded-t-md">
+            <div className="border border-b-0 border-gray-300 top-0 left-0 right-0 block rounded-t-md">
               <button
                 onClick={() =>
                   setUIState((prevState: UIState) => ({
@@ -287,6 +283,15 @@ function CreatePostCore() {
             )}
           </div>
           <div className="py-4">
+            <div className="pb-4">
+              <Checkbox
+                checked={isPrivate}
+                onChange={(e) => setIsPrivate((value) => !value)}
+                labelPlacement={LABEL_PLACEMENT.right}
+              >
+                Make it private
+              </Checkbox>
+            </div>
             <div className="flex flex-wrap -mx-3 mb-6">
               <div className="w-full px-3">
                 <button
@@ -312,13 +317,6 @@ function CreatePostCore() {
                 )} */}
               </div>
             </div>
-            <Checkbox
-              checked={isPrivate}
-              onChange={(e) => setIsPrivate((value) => !value)}
-              labelPlacement={LABEL_PLACEMENT.right}
-            >
-              Make it private
-            </Checkbox>
           </div>
         </div>
       </div>

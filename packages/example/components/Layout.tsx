@@ -10,7 +10,7 @@ const Layout: FC<{title?: string}> = ({title, children}) => {
   const isClient = useIsClient()
   const displayTitle = title || 'Phala SDK Example'
   return (
-    <Block width="100%" maxWidth="900px" margin="0 auto" padding="0 10px">
+    <Block width="100%" maxWidth="980px" margin="0 auto" padding="0 10px">
       <Head>
         <title>{displayTitle}</title>
       </Head>

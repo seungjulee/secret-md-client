@@ -1,15 +1,28 @@
+export type Pastebin = {
+  id: string
+  content: string
+  owner: string
+  readable_by: string
+  created_on: number
+  is_private: boolean
+  title: string
+}
+
 const PastebinABI = {
   endpoint: process.env.NEXT_PUBLIC_WS_ENDPOINT as string,
   types: {
     PostId: 'String',
     PostContent: 'String',
     CreateOn: 'u64',
+    PostTitle: 'String',
 
     CreatePostRequest: {
       id: 'String',
       owner: 'AccountId',
+      is_private: 'bool',
       readable_by: 'AccountId',
       content: 'String',
+      title: 'String',
     },
 
     Post: {
@@ -18,6 +31,8 @@ const PastebinABI = {
       owner: 'AccountId',
       readable_by: 'AccountId',
       created_on: 'CreateOn',
+      is_private: 'bool',
+      title: 'PostTitle',
     },
 
     GuessError: {
