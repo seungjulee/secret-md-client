@@ -10,7 +10,9 @@ import { hexAddPrefix, numberToHex } from '@polkadot/util'
 // import { decodeAddress } from '@polkadot/util-crypto'
 import accountAtom from 'atoms/account'
 import { Block } from 'baseui/block'
+import { Button } from 'baseui/button'
 import { Checkbox, LABEL_PLACEMENT } from 'baseui/checkbox'
+import { Input } from 'baseui/input'
 import { StyledSpinnerNext } from 'baseui/spinner'
 import { toaster } from 'baseui/toast'
 import { LabelXSmall } from 'baseui/typography'
@@ -26,26 +28,14 @@ import { UnControlled as CodeMirror } from 'react-codemirror2'
 import ReactMarkdown from 'react-markdown'
 import { baseURL, CONTRACT_ID, PastebinABI } from '../contracts/Pastebin'
 
-// import { Link } from 'react-router-dom'
-
-declare let window: any
-interface UIState {
-  isPreview: boolean
-  isCompressed: boolean
-}
 const postId = randomHex(12)
 
 function CreatePostCore() {
-  //   const [account] = useAtom(accountAtom)
-  // store Post in local state
   const [title, setTitleValue] = useState<string>('')
   const [post, setPostValue] = useState<string>('')
-  const [uiState, setUIState] = useState<UIState>({
-    isPreview: false,
-    isCompressed: true,
-  })
   const [isPrivate, setIsPrivate] = useState<boolean>(false)
-  const [activeTab, setActiveTab] = useState('0')
+  const [allowReadAccess, setAllowReadAccess] = useState<boolean>(false)
+  const [isPreview, setIsPreview] = useState(false)
 
   const [api, setApi] = useState<ApiPromise>()
   const [phala, setPhala] = useState<PhalaInstance>()
@@ -65,6 +55,7 @@ function CreatePostCore() {
   const [signCertificateLoading, setSignCertificateLoading] = useState(false)
   const [guessLoading, setGuessLoading] = useState(false)
   const [owner, setOwner] = useState('')
+  const [readableBy, setReadableBy] = useState('')
 
   useEffect(() => {
     createApi(PastebinABI)
@@ -112,6 +103,7 @@ function CreatePostCore() {
     const owner = '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY'
     const poorBob = '5G96fAtHjVgTmosV7B5tLP7M8R62Fihu3EyPCViBWrgcXjaJ'
     const notAllowedPaul = '5HNEg9bZZV4w9jTeemHWwRLHGp7BxV8K3YN65iGvEYcxg5vb'
+    console.log('isprivate', isPrivate)
     try {
       const _unsubscribe = await phala.command({
         account,
@@ -198,7 +190,6 @@ function CreatePostCore() {
           }
         })
         .catch((err) => {
-          console.log(err)
           toaster.negative((err as Error).message, {})
         })
         .finally(() => {
@@ -238,31 +229,25 @@ function CreatePostCore() {
             />
             <div className="border border-b-0 border-gray-300 top-0 left-0 right-0 block rounded-t-md">
               <button
-                onClick={() =>
-                  setUIState((prevState: UIState) => ({
-                    ...prevState,
-                    isPreview: false,
-                  }))
-                }
+                onClick={() => setIsPreview(false)}
                 type="button"
-                className="py-2 px-4 inline-block text-gray-400 font-semibold"
+                className={`py-2 px-4 inline-block ${
+                  !isPreview ? 'font-bold' : 'text-gray-400 font-semibold'
+                }`}
               >
                 Write
               </button>
               <button
-                onClick={() =>
-                  setUIState((prevState: UIState) => ({
-                    ...prevState,
-                    isPreview: true,
-                  }))
-                }
+                onClick={() => setIsPreview(true)}
                 type="button"
-                className="py-2 px-4 inline-block text-gray-400 font-semibold"
+                className={`py-2 px-4 inline-block ${
+                  isPreview ? 'font-bold' : 'text-gray-400 font-semibold'
+                }`}
               >
                 Preview
               </button>
             </div>
-            {!uiState.isPreview && (
+            {!isPreview && (
               <CodeMirror
                 className="w-full prose max-w-none max-h-screen prose-indigo leading-6 rounded-b-md shadow-sm border border-gray-300 bg-white overflow-y-auto"
                 value={post}
@@ -276,7 +261,7 @@ function CreatePostCore() {
                 }}
               />
             )}
-            {uiState.isPreview && (
+            {isPreview && (
               <article className="markdown-body px-8 w-full prose max-w-none max-h-screen prose-indigo leading-6 rounded-b-md shadow-sm border border-gray-300 bg-white overflow-y-auto">
                 <ReactMarkdown>{post}</ReactMarkdown>
               </article>
@@ -292,31 +277,31 @@ function CreatePostCore() {
                 Make it private
               </Checkbox>
             </div>
-            <div className="flex flex-wrap -mx-3 mb-6">
-              <div className="w-full px-3">
-                <button
-                  onClick={onSignCertificate}
-                  className="flex bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            {isPrivate && (
+              <div className="pb-4">
+                <Checkbox
+                  checked={allowReadAccess}
+                  onChange={(e) => setAllowReadAccess((value) => !value)}
+                  labelPlacement={LABEL_PLACEMENT.right}
                 >
-                  Sign
-                </button>
-                <button
-                  onClick={onPublish}
-                  className="flex bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                >
-                  Publish
-                </button>
-                <button
-                  onClick={onView}
-                  className="flex bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                >
-                  View
-                </button>
-                {/* {publishedAddress && (
-                  <Link to={`/p/${publishedAddress}`}>{publishedAddress}</Link>
-                )} */}
+                  Allow read access to others
+                </Checkbox>
+                {allowReadAccess && (
+                  <Input
+                    value={readableBy}
+                    onChange={(e) =>
+                      setReadableBy(e.currentTarget.value.trim())
+                    }
+                    overrides={{Root: {style: {width: '500px'}}}}
+                  >
+                    Accounts:
+                  </Input>
+                )}
               </div>
-            </div>
+            )}
+            <Button onClick={onSignCertificate}>Sign</Button>
+            <Button onClick={onPublish}>Publish</Button>
+            <Button onClick={onView}>View</Button>
           </div>
         </div>
       </div>
