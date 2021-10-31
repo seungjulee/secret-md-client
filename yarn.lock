@@ -3889,9 +3889,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"example@workspace:packages/example":
+"example@workspace:packages/secret-md":
   version: 0.0.0-use.local
-  resolution: "example@workspace:packages/example"
+  resolution: "example@workspace:packages/secret-md"
   dependencies:
     "@phala/sdk": "workspace:packages/sdk"
     "@phala/typedefs": ^0.2.28

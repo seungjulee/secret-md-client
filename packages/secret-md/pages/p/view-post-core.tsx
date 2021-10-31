@@ -57,6 +57,7 @@ function ViewPost() {
   const [certificateData, setCertificateData] = useState<CertificateData>()
   const [signCertificateLoading, setSignCertificateLoading] = useState(false)
   const [account] = useAtom(accountAtom)
+  const [hasAccess, setHasAccess] = useState<boolean>(true)
 
   useEffect(() => {
     const _unsubscribe = unsubscribe.current
@@ -134,6 +135,7 @@ function ViewPost() {
 
         if (ok) {
           const result: Pastebin = ok.post
+          console.log(result)
 
           toaster.update(toastKey, {
             children: `Successfully fetched the post`,
@@ -149,8 +151,14 @@ function ViewPost() {
           throw new Error(err)
         }
       })
-      .catch((err) => {
-        toaster.negative((err as Error).message, {})
+      .catch((err: Error) => {
+        if (
+          err.message.includes('NotAuthorized') ||
+          err.message.includes('NotFound')
+        ) {
+          setHasAccess(false)
+        }
+        toaster.negative(err.message, {})
       })
       .finally(() => {
         setGuessLoading(false)
@@ -201,6 +209,20 @@ function ViewPost() {
                   Sign Certificate
                 </Button>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!hasAccess) {
+    return (
+      <div className="bg-gray-50 antialiased">
+        <div className="max-w-6xl mx-auto bg-white my-2 mb-8">
+          <div className="w-full prose max-w-none max-h-screen prose-indigo leading-6 rounded-b-md border border-gray-300 py-3 px-5 bg-white overflow-y-auto">
+            <div className="markdown-body my-4">
+              {`🥷 Sorry! The file doesn't exist or you don't have permission.`}
             </div>
           </div>
         </div>

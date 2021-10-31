@@ -13,8 +13,8 @@ const PastebinABI = {
   types: {
     PostId: 'String',
     PostContent: 'String',
-    CreateOn: 'u64',
     PostTitle: 'String',
+    CreateOn: 'u64',
 
     CreatePostRequest: {
       id: 'String',
@@ -29,9 +29,9 @@ const PastebinABI = {
       id: 'PostId',
       content: 'PostContent',
       owner: 'AccountId',
+      is_private: 'bool',
       readable_by: 'AccountId',
       created_on: 'CreateOn',
-      is_private: 'bool',
       title: 'PostTitle',
     },
 
